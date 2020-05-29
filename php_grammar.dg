@@ -1,0 +1,2032 @@
+%%% ###################################################
+
+%const% VARIANCE_MAX := 100
+%const% VARIANCE_TEMPLATE := "try { try { %s } catch (Exception $e) { } } catch(Error $e) { }"
+
+%%% PODSTAWOWE INPUTY:
+%section% := value
+
+fuzzInt :=
+	+common:intoverflow+
+
+fuzzFloat :=
+	%range%(0.0-0.9)
+	0.1111
+	-1.97684995314e+16
+	1.79769313486e+308
+	3.38800266804e+16
+
+fuzzAnyNumber :=
+	+fuzzInt+
+	+fuzzFloat+
+	+aflDigits+
+
+aflDigits :=
+	-1.97684995314e+16
+	-128
+	-129
+	-139333426276771806651771
+	-2147483648
+	-2147483649
+	-32768
+	-32769
+	-9223372036854775808
+	-9223372036854775809
+	-Infinity
+	0x481b49d0f8d5a3e7f821066157c37c
+	1.79769313486e+308
+	127
+	128
+	16649142472222295162770764775
+	18446744073709551615
+	18446744073709551616
+	2.07564741538e+16
+	2.22507385851e-308
+	2139095040
+	2147483647
+	2147483648
+	255
+	256
+	3.38800266804e+16
+	32767
+	32768
+	4294967295
+	4294967296
+	65535
+	65536
+	79228162514264337593543950336B
+	79228162514264337593543950336L
+	79228162514264337593543950336l
+	9223372036854775807
+	9223372036854775808
+	Infinity
+	NaN
+	inf
+
+fuzzBool :=
+	0
+	1
+	false
+	true
+
+fuzzStringList :=
+	%range%(a-z)
+	%00%00%00
+	%00%0a%0d
+	\x00
+	\xff
+	-1
+	-9223372036854775809
+
+fuzzString :=
+	"+fuzzStringList+"
+
+fuzzArray :=
+	array("a" => +fuzzAnyNumber+, "b" => +fuzzString+, "c" => +fuzzAnyNumber+ )
+
+%%% TODO: zrobic zagniezdzanie tablic jakos madrzej i bardziej losowo
+fuzzStackedArray :=
+	array(array(+fuzzString+,+fuzzString+,+fuzzString+), array(+fuzzString+,+fuzzAnyNumber+,+fuzzAnyNumber+), array("+fuzzAnyNumber+",+fuzzAnyNumber+,+fuzzAnyNumber+), array(+fuzzAnyNumber+,+fuzzAnyNumber+,+fuzzString+))
+
+fuzzMixed :=
+	+fuzzAnyNumber+
+	+fuzzString+
+	+fuzzArray+
+	+fuzzStackedArray+
+
+fuzzResource :=
+	fopen("/dev/null", "r")
+	fopen("/etc/passwd", "r")
+	fopen("/tmp/doesntexist", "w")
+
+fuzzCallable :=
+	"phpinfo"
+
+fuzzArrayreference :=
+	$ref_array
+
+fuzzIntreference :=
+	$ref_int
+
+fuzzStringreference :=
+	$ref_string
+
+fuzzTraversable :=
+	new ArrayIterator(array(0))
+
+fuzzObject :=
+	$vars[array_rand($vars)]
+
+fuzzThrowable :=
+	new Exception()
+
+fuzzBoolreference :=
+	$ref_bool
+
+fuzzObjectreference :=
+	$ref_object
+
+fuzzResourcereference :=
+	$ref_resource
+
+fuzzSimpleXMLElement :=
+	new SimpleXMLElement("<lt>a<gt>a<lt>/a<gt>")
+
+fuzzMixedreference :=
+	+fuzzBoolreference+
+	+fuzzIntreference+
+	+fuzzStringreference+
+	+fuzzArrayreference+
+	+fuzzObjectreference+
+	+fuzzResourcereference+
+
+fuzzSplObjectStorage := 
+	new SplObjectStorage()
+
+fuzzHashContext :=
+	hash_init("md5")
+
+fuzzDOMNode :=
+	new DOMNode()
+
+fuzzDOMAttr :=
+	new DOMAttr("attr")
+
+fuzzReflector := 
+	new ReflectionClass("ZipArchive")
+
+fuzzDOMDocument :=
+	 new DOMDocument()
+
+fuzzDOMDocumentType :=
+	 new DOMDocumentType()
+
+fuzzDOMElement :=
+	 new DOMElement("root")
+
+fuzzDOMNodeList :=
+	 new DOMNodeList()
+
+fuzzDOMDocumentFragment :=
+	 new DOMDocumentFragment()
+
+fuzzDOMText :=
+	 new DOMText()
+
+fuzzDOMCDATASection :=
+	 new DOMCDATASection("root value")
+
+fuzzDOMProcessingInstruction :=
+	 new DOMProcessingInstruction("php", "phpinfo()")
+
+fuzzDOMEntityReference :=
+	 new DOMEntityReference("nbsp")
+
+fuzzDOMComment :=
+	 new DOMComment()
+
+fuzzIterator := 
+	new ArrayIterator(array(0))
+
+fuzzGenerator := 
+	(function () { yield 0; })()
+
+fuzzDateTime :=
+	 new DateTime()
+
+fuzzDateTimeZone :=
+	 new DateTimeZone("America/Chicago")
+
+fuzzDateTimeImmutable :=
+	 new DateTimeImmutable()
+
+fuzzDateInterval :=
+	 new DateInterval("P2Y4DT6H8M")
+
+fuzzDateTimeInterface :=
+	 new DateTime()
+
+
+%%% KONIEC INPUTOW
+
+%%% DEFINICJE FUNKCJI:
+
+wszystkieFunkcje :=
+	abs(+fuzzMixed+)
+	acos(+fuzzFloat+)
+	acosh(+fuzzFloat+)
+	addcslashes(+fuzzString+, +fuzzString+)
+	addslashes(+fuzzString+)
+	array_change_key_case(+fuzzArray+, +fuzzInt+)
+	array_chunk(+fuzzArray+, +fuzzInt+, +fuzzBool+)
+	array_column(+fuzzArray+, +fuzzMixed+, +fuzzMixed+)
+	array_combine(+fuzzArray+, +fuzzArray+)
+	array_count_values(+fuzzArray+)
+	array_diff_assoc(+fuzzArray+, +fuzzArray+, +fuzzArray+)
+	array_diff(+fuzzArray+, +fuzzArray+, +fuzzArray+)
+	array_diff_key(+fuzzArray+, +fuzzArray+, +fuzzArray+)
+	array_diff_uassoc(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_diff_ukey(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_fill(+fuzzInt+, +fuzzInt+, +fuzzMixed+)
+	array_fill_keys(+fuzzArray+, +fuzzMixed+)
+	array_filter(+fuzzArray+, +fuzzCallable+, +fuzzInt+)
+	array_flip(+fuzzArray+)
+	array_intersect_assoc(+fuzzArray+, +fuzzArray+, +fuzzArray+)
+	array_intersect(+fuzzArray+, +fuzzArray+, +fuzzArray+)
+	array_intersect_key(+fuzzArray+, +fuzzArray+, +fuzzArray+)
+	array_intersect_uassoc(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_intersect_ukey(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_key_exists(+fuzzMixed+, +fuzzArray+)
+	array_key_first(+fuzzArray+)
+	array_key_last(+fuzzArray+)
+	array_keys(+fuzzArray+)
+	array_keys(+fuzzArray+, +fuzzMixed+, +fuzzBool+)
+	array_map(+fuzzCallable+, +fuzzArray+, +fuzzArray+)
+	array_merge(+fuzzArray+)
+	array_merge_recursive(+fuzzArray+)
+	array_multisort(+fuzzArrayreference+, +fuzzMixed+, +fuzzMixed+, +fuzzMixed+)
+	array_pad(+fuzzArray+, +fuzzInt+, +fuzzMixed+)
+	array_pop(+fuzzArrayreference+)
+	array_product(+fuzzArray+)
+	array_push(+fuzzArrayreference+, +fuzzMixed+)
+	array_rand(+fuzzArray+, +fuzzInt+)
+	array_reduce(+fuzzArray+, +fuzzCallable+, +fuzzMixed+)
+	array_replace(+fuzzArray+, +fuzzArray+)
+	array_replace_recursive(+fuzzArray+, +fuzzArray+)
+	array_reverse(+fuzzArray+, +fuzzBool+)
+	array_search(+fuzzMixed+, +fuzzArray+, +fuzzBool+)
+	array_shift(+fuzzArrayreference+)
+	array_slice(+fuzzArray+, +fuzzInt+, +fuzzInt+, +fuzzBool+)
+	array_splice(+fuzzArrayreference+, +fuzzInt+, +fuzzInt+, +fuzzMixed+)
+	array_sum(+fuzzArray+)
+	array_udiff_assoc(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_udiff(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_udiff_uassoc(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+, +fuzzCallable+)
+	array_uintersect_assoc(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_uintersect(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+)
+	array_uintersect_uassoc(+fuzzArray+, +fuzzArray+, +fuzzArray+, +fuzzCallable+, +fuzzCallable+)
+	array_unique(+fuzzArray+, +fuzzInt+)
+	array_unshift(+fuzzArrayreference+, +fuzzMixed+)
+	array_values(+fuzzArray+)
+	array_walk(+fuzzArrayreference+, +fuzzCallable+, +fuzzMixed+)
+	array_walk_recursive(+fuzzArrayreference+, +fuzzCallable+, +fuzzMixed+)
+	arsort(+fuzzArrayreference+, +fuzzInt+)
+	asin(+fuzzFloat+)
+	asinh(+fuzzFloat+)
+	asort(+fuzzArrayreference+, +fuzzInt+)
+	assert(+fuzzMixed+, +fuzzString+)
+	assert(+fuzzMixed+, +fuzzThrowable+)
+	assert_options(+fuzzInt+, +fuzzMixed+)
+	atan2(+fuzzFloat+, +fuzzFloat+)
+	atan(+fuzzFloat+)
+	atanh(+fuzzFloat+)
+	base64_decode(+fuzzString+, +fuzzBool+)
+	base64_encode(+fuzzString+)
+	base_convert(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	basename(+fuzzString+, +fuzzString+)
+	bin2hex(+fuzzString+)
+	bindec(+fuzzString+)
+	boolval(+fuzzMixed+)
+	call_user_func_array(+fuzzCallable+, +fuzzArray+)
+	call_user_func(+fuzzCallable+, +fuzzMixed+)
+	ceil(+fuzzFloat+)
+	chdir(+fuzzString+)
+	checkdate(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	checkdnsrr(+fuzzString+, +fuzzString+)
+	chgrp(+fuzzString+, +fuzzMixed+)
+	chmod(+fuzzString+, +fuzzInt+)
+	chown(+fuzzString+, +fuzzMixed+)
+	chr(+fuzzInt+)
+	chroot(+fuzzString+)
+	chunk_split(+fuzzString+, +fuzzInt+, +fuzzString+)
+	class_alias(+fuzzString+, +fuzzString+, +fuzzBool+)
+	class_exists(+fuzzString+, +fuzzBool+)
+	class_implements(+fuzzMixed+, +fuzzBool+)
+	class_parents(+fuzzMixed+, +fuzzBool+)
+	class_uses(+fuzzMixed+, +fuzzBool+)
+	clearstatcache(+fuzzBool+, +fuzzString+)
+	cli_get_process_title()
+	cli_set_process_title(+fuzzString+)
+	closedir(+fuzzResource+)
+	closelog()
+	compact(+fuzzMixed+, +fuzzMixed+)
+	connection_aborted()
+	connection_status()
+	constant(+fuzzString+)
+	convert_cyr_string(+fuzzString+, +fuzzString+, +fuzzString+)
+	convert_uudecode(+fuzzString+)
+	convert_uuencode(+fuzzString+)
+	copy(+fuzzString+, +fuzzString+, +fuzzResource+)
+	cos(+fuzzFloat+)
+	cosh(+fuzzFloat+)
+	count()
+	count_chars(+fuzzString+, +fuzzInt+)
+	count(+fuzzMixed+, +fuzzInt+)
+	crc32(+fuzzString+)
+	create_function(+fuzzString+, +fuzzString+)
+	crypt(+fuzzString+, +fuzzString+)
+	ctype_alnum(+fuzzString+)
+	ctype_alpha(+fuzzString+)
+	ctype_cntrl(+fuzzString+)
+	ctype_digit(+fuzzString+)
+	ctype_graph(+fuzzString+)
+	ctype_lower(+fuzzString+)
+	ctype_print(+fuzzString+)
+	ctype_punct(+fuzzString+)
+	ctype_space(+fuzzString+)
+	ctype_upper(+fuzzString+)
+	ctype_xdigit(+fuzzString+)
+	curl_close(+fuzzResource+)
+	curl_copy_handle(+fuzzResource+)
+	curl_errno(+fuzzResource+)
+	curl_error(+fuzzResource+)
+	curl_escape(+fuzzResource+, +fuzzString+)
+	curl_exec(+fuzzResource+)
+	curl_file_create(+fuzzString+, +fuzzString+, +fuzzString+)
+	curl_getinfo(+fuzzResource+, +fuzzInt+)
+	curl_init(+fuzzString+)
+	curl_multi_add_handle(+fuzzResource+, +fuzzResource+)
+	curl_multi_close(+fuzzResource+)
+	curl_multi_errno(+fuzzResource+)
+	curl_multi_exec(+fuzzResource+, +fuzzIntreference+)
+	curl_multi_getcontent(+fuzzResource+)
+	curl_multi_info_read(+fuzzResource+, +fuzzIntreference+)
+	curl_multi_init()
+	curl_multi_remove_handle(+fuzzResource+, +fuzzResource+)
+	curl_multi_select(+fuzzResource+, +fuzzFloat+)
+	curl_multi_setopt(+fuzzResource+, +fuzzInt+, +fuzzMixed+)
+	curl_multi_strerror(+fuzzInt+)
+	curl_pause(+fuzzResource+, +fuzzInt+)
+	curl_reset(+fuzzResource+)
+	curl_setopt_array(+fuzzResource+, +fuzzArray+)
+	curl_setopt(+fuzzResource+, +fuzzInt+, +fuzzMixed+)
+	curl_share_close(+fuzzResource+)
+	curl_share_errno(+fuzzResource+)
+	curl_share_init()
+	curl_share_setopt(+fuzzResource+, +fuzzInt+, +fuzzString+)
+	curl_share_strerror(+fuzzInt+)
+	curl_strerror(+fuzzInt+)
+	curl_unescape(+fuzzResource+, +fuzzString+)
+	curl_version(+fuzzInt+)
+	current(+fuzzArray+)
+	date_default_timezone_get()
+	date_default_timezone_set(+fuzzString+)
+	date(+fuzzString+, +fuzzInt+)
+	date_parse_from_format(+fuzzString+, +fuzzString+)
+	date_parse(+fuzzString+)
+	date_sun_info(+fuzzInt+, +fuzzFloat+, +fuzzFloat+)
+	date_sunrise(+fuzzInt+, +fuzzInt+, +fuzzFloat+, +fuzzFloat+, +fuzzFloat+, +fuzzFloat+)
+	date_sunset(+fuzzInt+, +fuzzInt+, +fuzzFloat+, +fuzzFloat+, +fuzzFloat+, +fuzzFloat+)
+	debug_backtrace(+fuzzInt+, +fuzzInt+)
+	debug_print_backtrace(+fuzzInt+, +fuzzInt+)
+	debug_zval_dump(+fuzzMixed+, +fuzzMixed+)
+	decbin(+fuzzInt+)
+	dechex(+fuzzInt+)
+	decoct(+fuzzInt+)
+	defined(+fuzzString+)
+	define(+fuzzString+, +fuzzMixed+, +fuzzBool+)
+	deflate_add(+fuzzResource+, +fuzzString+, +fuzzInt+)
+	deflate_init(+fuzzInt+, +fuzzArray+)
+	deg2rad(+fuzzFloat+)
+	dir(+fuzzString+, +fuzzResource+)
+	dirname(+fuzzString+, +fuzzInt+)
+	disk_free_space(+fuzzString+)
+	disk_total_space(+fuzzString+)
+	dl(+fuzzString+)
+	dns_get_record(+fuzzString+, +fuzzInt+, +fuzzArrayreference+, +fuzzArrayreference+, +fuzzBool+)
+	dom_import_simplexml(+fuzzSimpleXMLElement+)
+	each(+fuzzArrayreference+)
+	end(+fuzzArrayreference+)
+	error_clear_last()
+	error_get_last()
+	error_log(+fuzzString+, +fuzzInt+, +fuzzString+, +fuzzString+)
+	error_reporting(+fuzzInt+)
+	escapeshellarg(+fuzzString+)
+	escapeshellcmd(+fuzzString+)
+	exec(+fuzzString+, +fuzzArrayreference+, +fuzzIntreference+)
+	exp(+fuzzFloat+)
+	explode(+fuzzString+, +fuzzString+, +fuzzInt+)
+	expm1(+fuzzFloat+)
+	extension_loaded(+fuzzString+)
+	extract(+fuzzArrayreference+, +fuzzInt+, +fuzzString+)
+	ezmlm_hash(+fuzzString+)
+	fclose(+fuzzResource+)
+	feof(+fuzzResource+)
+	fflush(+fuzzResource+)
+	fgetc(+fuzzResource+)
+	fgetcsv(+fuzzResource+, +fuzzInt+, +fuzzString+, +fuzzString+, +fuzzString+)
+	fgets(+fuzzResource+, +fuzzInt+)
+	fgetss(+fuzzResource+, +fuzzInt+, +fuzzString+)
+	fileatime(+fuzzString+)
+	filectime(+fuzzString+)
+	file_exists(+fuzzString+)
+	file(+fuzzString+, +fuzzInt+, +fuzzResource+)
+	file_get_contents(+fuzzString+, +fuzzBool+, +fuzzResource+, +fuzzInt+, +fuzzInt+)
+	filegroup(+fuzzString+)
+	fileinode(+fuzzString+)
+	filemtime(+fuzzString+)
+	fileowner(+fuzzString+)
+	fileperms(+fuzzString+)
+	file_put_contents(+fuzzString+, +fuzzMixed+, +fuzzInt+, +fuzzResource+)
+	filesize(+fuzzString+)
+	filetype(+fuzzString+)
+	filter_has_var(+fuzzInt+, +fuzzString+)
+	filter_id(+fuzzString+)
+	filter_input_array(+fuzzInt+, +fuzzMixed+, +fuzzBool+)
+	filter_input(+fuzzInt+, +fuzzString+, +fuzzInt+, +fuzzMixed+)
+	filter_list()
+	filter_var_array(+fuzzArray+, +fuzzMixed+, +fuzzBool+)
+	filter_var(+fuzzMixed+, +fuzzInt+, +fuzzMixed+)
+	finfo_close(+fuzzResource+)
+	finfo_open(+fuzzInt+, +fuzzString+)
+	floatval(+fuzzMixed+)
+	flock(+fuzzResource+, +fuzzInt+, +fuzzIntreference+)
+	floor(+fuzzFloat+)
+	flush()
+	fmod(+fuzzFloat+, +fuzzFloat+)
+	fnmatch(+fuzzString+, +fuzzString+, +fuzzInt+)
+	fopen(+fuzzString+, +fuzzString+, +fuzzBool+, +fuzzResource+)
+	forward_static_call_array(+fuzzCallable+, +fuzzArray+)
+	forward_static_call(+fuzzCallable+, +fuzzMixed+)
+	fpassthru(+fuzzResource+)
+	fprintf(+fuzzResource+, +fuzzString+, +fuzzMixed+)
+	fputcsv(+fuzzResource+, +fuzzArray+, +fuzzString+, +fuzzString+, +fuzzString+)
+	fread(+fuzzResource+, +fuzzInt+)
+	fscanf(+fuzzResource+, +fuzzString+, +fuzzMixedreference+)
+	fseek(+fuzzResource+, +fuzzInt+, +fuzzInt+)
+	fsockopen(+fuzzString+, +fuzzInt+, +fuzzIntreference+, +fuzzStringreference+, +fuzzFloat+)
+	fstat(+fuzzResource+)
+	ftell(+fuzzResource+)
+	ftok(+fuzzString+, +fuzzString+)
+	ftruncate(+fuzzResource+, +fuzzInt+)
+	func_get_arg(+fuzzInt+)
+	func_get_args()
+	func_num_args()
+	function_exists(+fuzzString+)
+	fwrite(+fuzzResource+, +fuzzString+, +fuzzInt+)
+	gc_collect_cycles()
+	gc_disable()
+	gc_enable()
+	gc_enabled()
+	gc_mem_caches()
+	gc_status()
+	get_browser(+fuzzString+, +fuzzBool+)
+	get_called_class()
+	get_cfg_var(+fuzzString+)
+	get_class(+fuzzObject+)
+	get_class_methods(+fuzzMixed+)
+	get_class_vars(+fuzzString+)
+	get_current_user()
+	getcwd()
+	getdate(+fuzzInt+)
+	get_declared_classes()
+	get_declared_interfaces()
+	get_declared_traits()
+	get_defined_constants(+fuzzBool+)
+	get_defined_functions(+fuzzBool+)
+	get_defined_vars()
+	getenv()
+	getenv(+fuzzString+, +fuzzBool+)
+	get_extension_funcs(+fuzzString+)
+	get_headers(+fuzzString+, +fuzzInt+, +fuzzResource+)
+	gethostbyaddr(+fuzzString+)
+	gethostbyname(+fuzzString+)
+	gethostbynamel(+fuzzString+)
+	gethostname()
+	get_html_translation_table(+fuzzInt+, +fuzzInt+, +fuzzString+)
+	getimagesizefromstring(+fuzzString+, +fuzzArrayreference+)
+	getimagesize(+fuzzString+, +fuzzArrayreference+)
+	get_included_files()
+	get_include_path()
+	getlastmod()
+	get_loaded_extensions(+fuzzBool+)
+	get_magic_quotes_gpc()
+	get_magic_quotes_runtime()
+	get_meta_tags(+fuzzString+, +fuzzBool+)
+	getmxrr(+fuzzString+, +fuzzArrayreference+, +fuzzArrayreference+)
+	getmygid()
+	getmyinode()
+	getmypid()
+	getmyuid()
+	get_object_vars(+fuzzObject+)
+	getopt(+fuzzString+, +fuzzArray+, +fuzzIntreference+)
+	get_parent_class(+fuzzMixed+)
+	getprotobyname(+fuzzString+)
+	getprotobynumber(+fuzzInt+)
+	getrandmax()
+	get_resources(+fuzzString+)
+	get_resource_type(+fuzzResource+)
+	getrusage(+fuzzInt+)
+	getservbyname(+fuzzString+, +fuzzString+)
+	getservbyport(+fuzzInt+, +fuzzString+)
+	gettimeofday(+fuzzBool+)
+	getType()
+	gettype(+fuzzMixed+)
+	glob(+fuzzString+, +fuzzInt+)
+	gmdate(+fuzzString+, +fuzzInt+)
+	gmmktime(+fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+)
+	gmstrftime(+fuzzString+, +fuzzInt+)
+	gzclose(+fuzzResource+)
+	gzcompress(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	gzdecode(+fuzzString+, +fuzzInt+)
+	gzdeflate(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	gzencode(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	gzeof(+fuzzResource+)
+	gzfile(+fuzzString+, +fuzzInt+)
+	gzgetc(+fuzzResource+)
+	gzgets(+fuzzResource+, +fuzzInt+)
+	gzgetss(+fuzzResource+, +fuzzInt+, +fuzzString+)
+	gzinflate(+fuzzString+, +fuzzInt+)
+	gzopen(+fuzzString+, +fuzzString+, +fuzzInt+)
+	gzpassthru(+fuzzResource+)
+	gzread(+fuzzResource+, +fuzzInt+)
+	gzrewind(+fuzzResource+)
+	gzseek(+fuzzResource+, +fuzzInt+, +fuzzInt+)
+	gztell(+fuzzResource+)
+	gzuncompress(+fuzzString+, +fuzzInt+)
+	gzwrite(+fuzzResource+, +fuzzString+, +fuzzInt+)
+	hash_algos()
+	hash_copy(+fuzzHashContext+)
+	hash_equals(+fuzzString+, +fuzzString+)
+	hash_file(+fuzzString+, +fuzzString+, +fuzzBool+)
+	hash_final(+fuzzHashContext+, +fuzzBool+)
+	hash(+fuzzString+, +fuzzString+, +fuzzBool+)
+	hash_hkdf(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzString+)
+	hash_hmac_algos()
+	hash_hmac_file(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzBool+)
+	hash_hmac(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzBool+)
+	hash_init(+fuzzString+, +fuzzInt+, +fuzzString+)
+	hash_pbkdf2(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzBool+)
+	hash_update_file(+fuzzHashContext+, +fuzzString+, +fuzzResource+)
+	hash_update(+fuzzHashContext+, +fuzzString+)
+	hash_update_stream(+fuzzHashContext+, +fuzzResource+, +fuzzInt+)
+	header(+fuzzString+, +fuzzBool+, +fuzzInt+)
+	header_register_callback(+fuzzCallable+)
+	header_remove(+fuzzString+)
+	headers_list()
+	headers_sent(+fuzzStringreference+, +fuzzIntreference+)
+	hebrevc(+fuzzString+, +fuzzInt+)
+	hebrev(+fuzzString+, +fuzzInt+)
+	hex2bin(+fuzzString+)
+	hexdec(+fuzzString+)
+	highlight_file(+fuzzString+, +fuzzBool+)
+	highlight_string(+fuzzString+, +fuzzBool+)
+	hrtime(+fuzzBool+)
+	htmlentities(+fuzzString+, +fuzzInt+, +fuzzString+, +fuzzBool+)
+	html_entity_decode(+fuzzString+, +fuzzInt+, +fuzzString+)
+	htmlspecialchars_decode(+fuzzString+, +fuzzInt+)
+	htmlspecialchars(+fuzzString+, +fuzzInt+, +fuzzString+, +fuzzBool+)
+	http_build_query(+fuzzMixed+, +fuzzString+, +fuzzString+, +fuzzInt+)
+	http_response_code(+fuzzInt+)
+	hypot(+fuzzFloat+, +fuzzFloat+)
+	iconv(+fuzzString+, +fuzzString+, +fuzzString+)
+	iconv_get_encoding(+fuzzString+)
+	iconv_mime_decode(+fuzzString+, +fuzzInt+, +fuzzString+)
+	iconv_mime_decode_headers(+fuzzString+, +fuzzInt+, +fuzzString+)
+	iconv_mime_encode(+fuzzString+, +fuzzString+, +fuzzArray+)
+	iconv_set_encoding(+fuzzString+, +fuzzString+)
+	iconv_strlen(+fuzzString+, +fuzzString+)
+	iconv_strpos(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+)
+	iconv_strrpos(+fuzzString+, +fuzzString+, +fuzzString+)
+	iconv_substr(+fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzString+)
+	idate(+fuzzString+, +fuzzInt+)
+	ignore_user_abort(+fuzzBool+)
+	image_type_to_extension(+fuzzInt+, +fuzzBool+)
+	image_type_to_mime_type(+fuzzInt+)
+	implode(+fuzzArray+)
+	implode(+fuzzString+, +fuzzArray+)
+	in_array(+fuzzMixed+, +fuzzArray+, +fuzzBool+)
+	inet_ntop(+fuzzString+)
+	inet_pton(+fuzzString+)
+	inflate_add(+fuzzResource+, +fuzzString+, +fuzzInt+)
+	inflate_get_read_len(+fuzzResource+)
+	inflate_get_status(+fuzzResource+)
+	inflate_init(+fuzzInt+, +fuzzArray+)
+	ini_get_all(+fuzzString+, +fuzzBool+)
+	ini_get(+fuzzString+)
+	ini_restore(+fuzzString+)
+	ini_set(+fuzzString+, +fuzzString+)
+	intdiv(+fuzzInt+, +fuzzInt+)
+	interface_exists(+fuzzString+, +fuzzBool+)
+	intval(+fuzzMixed+, +fuzzInt+)
+	ip2long(+fuzzString+)
+	iptcembed(+fuzzString+, +fuzzString+, +fuzzInt+)
+	iptcparse(+fuzzString+)
+	is_a(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	is_array(+fuzzMixed+)
+	is_bool(+fuzzMixed+)
+	is_callable(+fuzzMixed+, +fuzzBool+, +fuzzStringreference+)
+	is_countable(+fuzzMixed+)
+	is_dir(+fuzzString+)
+	is_executable(+fuzzString+)
+	is_file(+fuzzString+)
+	is_finite(+fuzzFloat+)
+	is_float(+fuzzMixed+)
+	is_infinite(+fuzzFloat+)
+	is_int(+fuzzMixed+)
+	is_iterable(+fuzzMixed+)
+	is_link(+fuzzString+)
+	is_nan(+fuzzFloat+)
+	is_null(+fuzzMixed+)
+	is_numeric(+fuzzMixed+)
+	is_object(+fuzzMixed+)
+	is_readable(+fuzzString+)
+	is_resource(+fuzzMixed+)
+	is_scalar(+fuzzMixed+)
+	is_string(+fuzzMixed+)
+	is_subclass_of(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	is_uploaded_file(+fuzzString+)
+	is_writable(+fuzzString+)
+	iterator_apply(+fuzzTraversable+, +fuzzCallable+, +fuzzArray+)
+	iterator_count(+fuzzTraversable+)
+	iterator_to_array(+fuzzTraversable+, +fuzzBool+)
+	json_decode(+fuzzString+, +fuzzBool+, +fuzzInt+, +fuzzInt+)
+	json_encode(+fuzzMixed+, +fuzzInt+, +fuzzInt+)
+	json_last_error()
+	json_last_error_msg()
+	key(+fuzzArray+)
+	krsort(+fuzzArrayreference+, +fuzzInt+)
+	ksort(+fuzzArrayreference+, +fuzzInt+)
+	lcfirst(+fuzzString+)
+	lcg_value()
+	lchgrp(+fuzzString+, +fuzzMixed+)
+	lchown(+fuzzString+, +fuzzMixed+)
+	levenshtein(+fuzzString+, +fuzzString+)
+	levenshtein(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzInt+)
+	libxml_clear_errors()
+	libxml_disable_entity_loader(+fuzzBool+)
+	libxml_get_errors()
+	libxml_get_last_error()
+	libxml_set_external_entity_loader(+fuzzCallable+)
+	libxml_set_streams_context(+fuzzResource+)
+	libxml_use_internal_errors(+fuzzBool+)
+	link(+fuzzString+, +fuzzString+)
+	linkinfo(+fuzzString+)
+	localeconv()
+	localtime(+fuzzInt+, +fuzzBool+)
+	log10(+fuzzFloat+)
+	log1p(+fuzzFloat+)
+	log(+fuzzFloat+, +fuzzFloat+)
+	long2ip(+fuzzInt+)
+	lstat(+fuzzString+)
+	ltrim(+fuzzString+, +fuzzString+)
+	mail(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzMixed+, +fuzzString+)
+	max(+fuzzArray+)
+	max(+fuzzMixed+, +fuzzMixed+)
+	mb_check_encoding(+fuzzMixed+, +fuzzString+)
+	mb_chr(+fuzzInt+, +fuzzString+)
+	mb_convert_case(+fuzzString+, +fuzzInt+, +fuzzString+)
+	mb_convert_encoding(+fuzzMixed+, +fuzzString+, +fuzzMixed+)
+	mb_convert_kana(+fuzzString+, +fuzzString+, +fuzzString+)
+	mb_convert_variables(+fuzzString+, +fuzzMixed+, +fuzzMixedreference+, +fuzzMixedreference+)
+	mb_decode_mimeheader(+fuzzString+)
+	mb_decode_numericentity(+fuzzString+, +fuzzArray+, +fuzzString+, +fuzzBool+)
+	mb_detect_encoding(+fuzzString+, +fuzzMixed+, +fuzzBool+)
+	mb_detect_order(+fuzzMixed+)
+	mb_encode_mimeheader(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+, +fuzzInt+)
+	mb_encode_numericentity(+fuzzString+, +fuzzArray+, +fuzzString+, +fuzzBool+)
+	mb_encoding_aliases(+fuzzString+)
+	mb_ereg(+fuzzString+, +fuzzString+, +fuzzArrayreference+)
+	mb_eregi(+fuzzString+, +fuzzString+, +fuzzArrayreference+)
+	mb_eregi_replace(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+)
+	mb_ereg_match(+fuzzString+, +fuzzString+, +fuzzString+)
+	mb_ereg_replace_callback(+fuzzString+, +fuzzCallable+, +fuzzString+, +fuzzString+)
+	mb_ereg_replace(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+)
+	mb_ereg_search(+fuzzString+, +fuzzString+)
+	mb_ereg_search_getpos()
+	mb_ereg_search_getregs()
+	mb_ereg_search_init(+fuzzString+, +fuzzString+, +fuzzString+)
+	mb_ereg_search_pos(+fuzzString+, +fuzzString+)
+	mb_ereg_search_regs(+fuzzString+, +fuzzString+)
+	mb_ereg_search_setpos(+fuzzInt+)
+	mb_get_info(+fuzzString+)
+	mb_http_input(+fuzzString+)
+	mb_http_output(+fuzzString+)
+	mb_internal_encoding(+fuzzString+)
+	mb_language()
+	mb_language(+fuzzString+)
+	mb_list_encodings()
+	mb_ord(+fuzzString+, +fuzzString+)
+	mb_output_handler(+fuzzString+, +fuzzInt+)
+	mb_parse_str(+fuzzString+, +fuzzArrayreference+)
+	mb_preferred_mime_name(+fuzzString+)
+	mb_regex_encoding(+fuzzString+)
+	mb_regex_set_options(+fuzzString+)
+	mb_scrub(+fuzzString+, +fuzzString+)
+	mb_send_mail(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzMixed+, +fuzzString+)
+	mb_split(+fuzzString+, +fuzzString+, +fuzzInt+)
+	mb_strcut(+fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzString+)
+	mb_strimwidth(+fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzString+, +fuzzString+)
+	mb_stripos(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+)
+	mb_stristr(+fuzzString+, +fuzzString+, +fuzzBool+, +fuzzString+)
+	mb_strlen(+fuzzString+, +fuzzString+)
+	mb_strpos(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+)
+	mb_strrchr(+fuzzString+, +fuzzString+, +fuzzBool+, +fuzzString+)
+	mb_strrichr(+fuzzString+, +fuzzString+, +fuzzBool+, +fuzzString+)
+	mb_strripos(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+)
+	mb_strrpos(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+)
+	mb_strstr(+fuzzString+, +fuzzString+, +fuzzBool+, +fuzzString+)
+	mb_strtolower(+fuzzString+, +fuzzString+)
+	mb_strtoupper(+fuzzString+, +fuzzString+)
+	mb_strwidth(+fuzzString+, +fuzzString+)
+	mb_substitute_character(+fuzzMixed+)
+	mb_substr_count(+fuzzString+, +fuzzString+, +fuzzString+)
+	mb_substr(+fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzString+)
+	md5_file(+fuzzString+, +fuzzBool+)
+	md5(+fuzzString+, +fuzzBool+)
+	memory_get_peak_usage(+fuzzBool+)
+	memory_get_usage(+fuzzBool+)
+	metaphone(+fuzzString+, +fuzzInt+)
+	method_exists(+fuzzMixed+, +fuzzString+)
+	mhash_count()
+	mhash(+fuzzInt+, +fuzzString+, +fuzzString+)
+	mhash_get_block_size(+fuzzInt+)
+	mhash_get_hash_name(+fuzzInt+)
+	mhash_keygen_s2k(+fuzzInt+, +fuzzString+, +fuzzString+, +fuzzInt+)
+	microtime(+fuzzBool+)
+	mime_content_type(+fuzzString+)
+	min(+fuzzArray+)
+	min(+fuzzMixed+, +fuzzMixed+)
+	mkdir(+fuzzString+, +fuzzInt+, +fuzzBool+, +fuzzResource+)
+	mktime(+fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+)
+	money_format(+fuzzString+, +fuzzFloat+)
+	move_uploaded_file(+fuzzString+, +fuzzString+)
+	mt_getrandmax()
+	mt_rand()
+	mt_rand(+fuzzInt+, +fuzzInt+)
+	mt_srand(+fuzzInt+, +fuzzInt+)
+	natcasesort(+fuzzArrayreference+)
+	natsort(+fuzzArrayreference+)
+	next(+fuzzArrayreference+)
+	nl2br(+fuzzString+, +fuzzBool+)
+	nl_langinfo(+fuzzInt+)
+	number_format(+fuzzFloat+, +fuzzInt+)
+	number_format(+fuzzFloat+, +fuzzInt+, +fuzzString+, +fuzzString+)
+	ob_clean()
+	ob_end_clean()
+	ob_end_flush()
+	ob_flush()
+	ob_get_clean()
+	ob_get_contents()
+	ob_get_flush()
+	ob_get_length()
+	ob_get_level()
+	ob_get_status()
+	ob_gzhandler(+fuzzString+, +fuzzInt+)
+	ob_implicit_flush(+fuzzInt+)
+	ob_list_handlers()
+	ob_start(+fuzzCallable+, +fuzzInt+, +fuzzInt+)
+	octdec(+fuzzString+)
+	opendir(+fuzzString+, +fuzzResource+)
+	openlog(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	openssl_cipher_iv_length(+fuzzString+)
+	openssl_csr_export(+fuzzMixed+, +fuzzStringreference+, +fuzzBool+)
+	openssl_csr_export_to_file(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	openssl_csr_get_public_key(+fuzzMixed+, +fuzzBool+)
+	openssl_csr_get_subject(+fuzzMixed+, +fuzzBool+)
+	openssl_csr_new(+fuzzArray+, +fuzzResourcereference+, +fuzzArray+, +fuzzArray+)
+	openssl_csr_sign(+fuzzMixed+, +fuzzMixed+, +fuzzMixed+, +fuzzInt+, +fuzzArray+, +fuzzInt+)
+	openssl_decrypt(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzString+, +fuzzString+)
+	openssl_dh_compute_key(+fuzzString+, +fuzzResource+)
+	openssl_digest(+fuzzString+, +fuzzString+, +fuzzBool+)
+	openssl_encrypt(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzStringreference+, +fuzzInt+)
+	openssl_error_string()
+	openssl_free_key(+fuzzResource+)
+	openssl_get_cert_locations()
+	openssl_get_cipher_methods(+fuzzBool+)
+	openssl_get_curve_names()
+	openssl_get_md_methods(+fuzzBool+)
+	openssl_open(+fuzzString+, +fuzzStringreference+, +fuzzString+, +fuzzMixed+, +fuzzString+, +fuzzString+)
+	openssl_pbkdf2(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzString+)
+	openssl_pkcs12_export(+fuzzMixed+, +fuzzStringreference+, +fuzzMixed+, +fuzzString+, +fuzzArray+)
+	openssl_pkcs12_export_to_file(+fuzzMixed+, +fuzzString+, +fuzzMixed+, +fuzzString+, +fuzzArray+)
+	openssl_pkcs12_read(+fuzzString+, +fuzzArrayreference+, +fuzzString+)
+	openssl_pkcs7_decrypt(+fuzzString+, +fuzzString+, +fuzzMixed+, +fuzzMixed+)
+	openssl_pkcs7_encrypt(+fuzzString+, +fuzzString+, +fuzzMixed+, +fuzzArray+, +fuzzInt+, +fuzzInt+)
+	openssl_pkcs7_read(+fuzzString+, +fuzzArrayreference+)
+	openssl_pkcs7_sign(+fuzzString+, +fuzzString+, +fuzzMixed+, +fuzzMixed+, +fuzzArray+, +fuzzInt+, +fuzzString+)
+	openssl_pkcs7_verify(+fuzzString+, +fuzzInt+, +fuzzString+, +fuzzArray+, +fuzzString+, +fuzzString+, +fuzzString+)
+	openssl_pkey_export(+fuzzMixed+, +fuzzStringreference+, +fuzzString+, +fuzzArray+)
+	openssl_pkey_export_to_file(+fuzzMixed+, +fuzzString+, +fuzzString+, +fuzzArray+)
+	openssl_pkey_free(+fuzzResource+)
+	openssl_pkey_get_details(+fuzzResource+)
+	openssl_pkey_get_private(+fuzzMixed+, +fuzzString+)
+	openssl_pkey_get_public(+fuzzMixed+)
+	openssl_pkey_new(+fuzzArray+)
+	openssl_private_decrypt(+fuzzString+, +fuzzStringreference+, +fuzzMixed+, +fuzzInt+)
+	openssl_private_encrypt(+fuzzString+, +fuzzStringreference+, +fuzzMixed+, +fuzzInt+)
+	openssl_public_decrypt(+fuzzString+, +fuzzStringreference+, +fuzzMixed+, +fuzzInt+)
+	openssl_public_encrypt(+fuzzString+, +fuzzStringreference+, +fuzzMixed+, +fuzzInt+)
+	openssl_random_pseudo_bytes(+fuzzInt+, +fuzzBoolreference+)
+	openssl_seal(+fuzzString+, +fuzzStringreference+, +fuzzArrayreference+, +fuzzArray+, +fuzzString+, +fuzzStringreference+)
+	openssl_sign(+fuzzString+, +fuzzStringreference+, +fuzzMixed+, +fuzzMixed+)
+	openssl_spki_export_challenge(+fuzzStringreference+)
+	openssl_spki_export(+fuzzStringreference+)
+	openssl_spki_new(+fuzzResourcereference+, +fuzzStringreference+, +fuzzInt+)
+	openssl_spki_verify(+fuzzStringreference+)
+	openssl_verify(+fuzzString+, +fuzzString+, +fuzzMixed+, +fuzzMixed+)
+	openssl_x509_check_private_key(+fuzzMixed+, +fuzzMixed+)
+	openssl_x509_checkpurpose(+fuzzMixed+, +fuzzInt+, +fuzzArray+, +fuzzString+)
+	openssl_x509_export(+fuzzMixed+, +fuzzStringreference+, +fuzzBool+)
+	openssl_x509_export_to_file(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	openssl_x509_fingerprint(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	openssl_x509_free(+fuzzResource+)
+	openssl_x509_parse(+fuzzMixed+, +fuzzBool+)
+	openssl_x509_read(+fuzzMixed+)
+	ord(+fuzzString+)
+	output_add_rewrite_var(+fuzzString+, +fuzzString+)
+	output_reset_rewrite_vars()
+	pack(+fuzzString+, +fuzzMixed+)
+	parse_ini_file(+fuzzString+, +fuzzBool+, +fuzzInt+)
+	parse_ini_string(+fuzzString+, +fuzzBool+, +fuzzInt+)
+	parse_str(+fuzzString+, +fuzzArrayreference+)
+	parse_url(+fuzzString+, +fuzzInt+)
+	passthru(+fuzzString+, +fuzzIntreference+)
+	password_get_info(+fuzzString+)
+	password_hash(+fuzzString+, +fuzzInt+, +fuzzArray+)
+	password_needs_rehash(+fuzzString+, +fuzzInt+, +fuzzArray+)
+	password_verify(+fuzzString+, +fuzzString+)
+	pathinfo(+fuzzString+, +fuzzInt+)
+	pclose(+fuzzResource+)
+	pcntl_alarm(+fuzzInt+)
+	pcntl_async_signals(+fuzzBool+)
+	pcntl_exec(+fuzzString+, +fuzzArray+, +fuzzArray+)
+	pcntl_fork()
+	pcntl_get_last_error()
+	pcntl_getpriority(+fuzzInt+, +fuzzInt+)
+	pcntl_setpriority(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	pcntl_signal_dispatch()
+	pcntl_signal(+fuzzInt+, +fuzzInt+, +fuzzBool+)
+	pcntl_signal_get_handler(+fuzzInt+)
+	pcntl_sigprocmask(+fuzzInt+, +fuzzArray+, +fuzzArrayreference+)
+	pcntl_strerror(+fuzzInt+)
+	pcntl_wexitstatus(+fuzzInt+)
+	pcntl_wifexited(+fuzzInt+)
+	pcntl_wifsignaled(+fuzzInt+)
+	pcntl_wifstopped(+fuzzInt+)
+	pcntl_wstopsig(+fuzzInt+)
+	pcntl_wtermsig(+fuzzInt+)
+	pdo_drivers()
+	pfsockopen(+fuzzString+, +fuzzInt+, +fuzzIntreference+, +fuzzStringreference+, +fuzzFloat+)
+	phpcredits(+fuzzInt+)
+	phpinfo(+fuzzInt+)
+	php_ini_loaded_file()
+	php_ini_scanned_files()
+	php_sapi_name()
+	php_strip_whitespace(+fuzzString+)
+	php_uname(+fuzzString+)
+	phpversion(+fuzzString+)
+	pi()
+	popen(+fuzzString+, +fuzzString+)
+	posix_access(+fuzzString+, +fuzzInt+)
+	posix_ctermid()
+	posix_getcwd()
+	posix_getegid()
+	posix_geteuid()
+	posix_getgid()
+	posix_getgrgid(+fuzzInt+)
+	posix_getgrnam(+fuzzString+)
+	posix_getgroups()
+	posix_get_last_error()
+	posix_getlogin()
+	posix_getpgid(+fuzzInt+)
+	posix_getpgrp()
+	posix_getpid()
+	posix_getppid()
+	posix_getpwnam(+fuzzString+)
+	posix_getpwuid(+fuzzInt+)
+	posix_getrlimit()
+	posix_getsid(+fuzzInt+)
+	posix_getuid()
+	posix_initgroups(+fuzzString+, +fuzzInt+)
+	posix_isatty(+fuzzMixed+)
+	posix_mkfifo(+fuzzString+, +fuzzInt+)
+	posix_mknod(+fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzInt+)
+	posix_setegid(+fuzzInt+)
+	posix_seteuid(+fuzzInt+)
+	posix_setgid(+fuzzInt+)
+	posix_setpgid(+fuzzInt+, +fuzzInt+)
+	posix_setsid()
+	posix_setuid(+fuzzInt+)
+	posix_strerror(+fuzzInt+)
+	posix_times()
+	posix_ttyname(+fuzzMixed+)
+	posix_uname()
+	pow(+fuzzAnyNumber+, +fuzzAnyNumber+)
+	preg_filter(+fuzzMixed+, +fuzzMixed+, +fuzzMixed+, +fuzzInt+, +fuzzIntreference+)
+	preg_grep(+fuzzString+, +fuzzArray+, +fuzzInt+)
+	preg_last_error()
+	preg_match_all(+fuzzString+, +fuzzString+, +fuzzArrayreference+, +fuzzInt+, +fuzzInt+)
+	preg_match(+fuzzString+, +fuzzString+, +fuzzArrayreference+, +fuzzInt+, +fuzzInt+)
+	preg_quote(+fuzzString+, +fuzzString+)
+	preg_replace_callback_array(+fuzzArray+, +fuzzMixed+, +fuzzInt+, +fuzzIntreference+)
+	preg_replace_callback(+fuzzMixed+, +fuzzCallable+, +fuzzMixed+, +fuzzInt+, +fuzzIntreference+)
+	preg_replace(+fuzzMixed+, +fuzzMixed+, +fuzzMixed+, +fuzzInt+, +fuzzIntreference+)
+	preg_split(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+)
+	prev(+fuzzArrayreference+)
+	printf(+fuzzString+, +fuzzMixed+)
+	print_r(+fuzzMixed+, +fuzzBool+)
+	proc_close(+fuzzResource+)
+	proc_get_status(+fuzzResource+)
+	proc_nice(+fuzzInt+)
+	proc_open(+fuzzString+, +fuzzArray+, +fuzzArrayreference+, +fuzzString+, +fuzzArray+, +fuzzArray+)
+	proc_terminate(+fuzzResource+, +fuzzInt+)
+	property_exists(+fuzzMixed+, +fuzzString+)
+	putenv(+fuzzString+)
+	quoted_printable_decode(+fuzzString+)
+	quoted_printable_encode(+fuzzString+)
+	quotemeta(+fuzzString+)
+	rad2deg(+fuzzFloat+)
+	rand()
+	rand(+fuzzInt+, +fuzzInt+)
+	random_bytes(+fuzzInt+)
+	random_int(+fuzzInt+, +fuzzInt+)
+	range(+fuzzMixed+, +fuzzMixed+, +fuzzAnyNumber+)
+	rawurldecode(+fuzzString+)
+	rawurlencode(+fuzzString+)
+	readdir(+fuzzResource+)
+	readfile(+fuzzString+, +fuzzBool+, +fuzzResource+)
+	readgzfile(+fuzzString+, +fuzzInt+)
+	readline_add_history(+fuzzString+)
+	readline_callback_handler_remove()
+	readline_callback_read_char()
+	readline_clear_history()
+	readline_completion_function(+fuzzCallable+)
+	readline_info(+fuzzString+, +fuzzString+)
+	readline_list_history()
+	readline_on_new_line()
+	readline_read_history(+fuzzString+)
+	readline_redisplay()
+	readline_write_history(+fuzzString+)
+	readlink(+fuzzString+)
+	realpath_cache_get()
+	realpath_cache_size()
+	realpath(+fuzzString+)
+	register_shutdown_function(+fuzzCallable+, +fuzzMixed+)
+	register_tick_function(+fuzzCallable+, +fuzzMixed+)
+	rename(+fuzzString+, +fuzzString+, +fuzzResource+)
+	reset(+fuzzArrayreference+)
+	restore_error_handler()
+	restore_exception_handler()
+	restore_include_path()
+	rewinddir(+fuzzResource+)
+	rewind(+fuzzResource+)
+	rmdir(+fuzzString+, +fuzzResource+)
+	round(+fuzzFloat+, +fuzzInt+, +fuzzInt+)
+	rsort(+fuzzArrayreference+, +fuzzInt+)
+	rtrim(+fuzzString+, +fuzzString+)
+	scandir(+fuzzString+, +fuzzInt+, +fuzzResource+)
+	serialize(+fuzzMixed+)
+	session_abort()
+	session_cache_expire(+fuzzString+)
+	session_cache_limiter(+fuzzString+)
+	session_create_id(+fuzzString+)
+	session_decode(+fuzzString+)
+	session_destroy()
+	session_encode()
+	session_gc()
+	session_get_cookie_params()
+	session_id(+fuzzString+)
+	session_module_name(+fuzzString+)
+	session_name(+fuzzString+)
+	session_regenerate_id(+fuzzBool+)
+	session_register_shutdown()
+	session_reset()
+	session_save_path(+fuzzString+)
+	session_set_cookie_params(+fuzzArray+)
+	session_set_cookie_params(+fuzzInt+, +fuzzString+, +fuzzString+, +fuzzBool+, +fuzzBool+)
+	session_set_save_handler(+fuzzCallable+, +fuzzCallable+, +fuzzCallable+, +fuzzCallable+, +fuzzCallable+, +fuzzCallable+, +fuzzCallable+, +fuzzCallable+)
+	session_set_save_handler(+fuzzObject+, +fuzzBool+)
+	session_start(+fuzzArray+)
+	session_status()
+	session_unset()
+	session_write_close()
+	setcookie(+fuzzString+, +fuzzString+, +fuzzArray+)
+	setcookie(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzString+, +fuzzBool+, +fuzzBool+)
+	set_error_handler(+fuzzCallable+, +fuzzInt+)
+	set_exception_handler(+fuzzCallable+)
+	set_include_path(+fuzzString+)
+	setlocale(+fuzzInt+, +fuzzArray+)
+	setlocale(+fuzzInt+, +fuzzString+, +fuzzString+)
+	setrawcookie(+fuzzString+, +fuzzString+, +fuzzArray+)
+	setrawcookie(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzString+, +fuzzBool+, +fuzzBool+)
+	set_time_limit(+fuzzInt+)
+	settype(+fuzzMixedreference+, +fuzzString+)
+	sha1_file(+fuzzString+, +fuzzBool+)
+	sha1(+fuzzString+, +fuzzBool+)
+	shell_exec(+fuzzString+)
+	shuffle(+fuzzArrayreference+)
+	simplexml_import_dom(+fuzzDOMNode+, +fuzzString+)
+	simplexml_load_file(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzBool+)
+	simplexml_load_string(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzString+, +fuzzBool+)
+	sin(+fuzzFloat+)
+	sinh(+fuzzFloat+)
+	sort(+fuzzArrayreference+, +fuzzInt+)
+	sort(+fuzzString+)
+	soundex(+fuzzString+)
+	spl_autoload_call(+fuzzString+)
+	spl_autoload_extensions(+fuzzString+)
+	spl_autoload_functions()
+	spl_autoload(+fuzzString+, +fuzzString+)
+	spl_autoload_register(+fuzzCallable+, +fuzzBool+, +fuzzBool+)
+	spl_autoload_unregister(+fuzzMixed+)
+	spl_classes()
+	spl_object_hash(+fuzzObject+)
+	spl_object_id(+fuzzObject+)
+	sprintf(+fuzzString+, +fuzzMixed+)
+	sqrt(+fuzzFloat+)
+	srand(+fuzzInt+)
+	sscanf(+fuzzString+, +fuzzString+, +fuzzMixedreference+)
+	stat(+fuzzString+)
+	strcasecmp(+fuzzString+, +fuzzString+)
+	strcmp(+fuzzString+, +fuzzString+)
+	strcoll(+fuzzString+, +fuzzString+)
+	strcspn(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+)
+	stream_bucket_append(+fuzzResource+, +fuzzObject+)
+	stream_bucket_make_writeable(+fuzzResource+)
+	stream_bucket_new(+fuzzResource+, +fuzzString+)
+	stream_bucket_prepend(+fuzzResource+, +fuzzObject+)
+	stream_context_create(+fuzzArray+, +fuzzArray+)
+	stream_context_get_default(+fuzzArray+)
+	stream_context_get_options(+fuzzResource+)
+	stream_context_get_params(+fuzzResource+)
+	stream_context_set_default(+fuzzArray+)
+	stream_context_set_option(+fuzzResource+, +fuzzArray+)
+	stream_context_set_option(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzMixed+)
+	stream_context_set_params(+fuzzResource+, +fuzzArray+)
+	stream_copy_to_stream(+fuzzResource+, +fuzzResource+, +fuzzInt+, +fuzzInt+)
+	stream_filter_append(+fuzzResource+, +fuzzString+, +fuzzInt+, +fuzzMixed+)
+	stream_filter_prepend(+fuzzResource+, +fuzzString+, +fuzzInt+, +fuzzMixed+)
+	stream_filter_register(+fuzzString+, +fuzzString+)
+	stream_filter_remove(+fuzzResource+)
+	stream_get_contents(+fuzzResource+, +fuzzInt+, +fuzzInt+)
+	stream_get_filters()
+	stream_get_line(+fuzzResource+, +fuzzInt+, +fuzzString+)
+	stream_get_meta_data(+fuzzResource+)
+	stream_get_transports()
+	stream_get_wrappers()
+	stream_isatty(+fuzzResource+)
+	stream_is_local(+fuzzMixed+)
+	stream_resolve_include_path(+fuzzString+)
+	stream_select(+fuzzArrayreference+, +fuzzArrayreference+, +fuzzArrayreference+, +fuzzInt+, +fuzzInt+)
+	stream_set_blocking(+fuzzResource+, +fuzzBool+)
+	stream_set_chunk_size(+fuzzResource+, +fuzzInt+)
+	stream_set_read_buffer(+fuzzResource+, +fuzzInt+)
+	stream_set_timeout(+fuzzResource+, +fuzzInt+, +fuzzInt+)
+	stream_set_write_buffer(+fuzzResource+, +fuzzInt+)
+	stream_socket_accept(+fuzzResource+, +fuzzFloat+, +fuzzStringreference+)
+	stream_socket_client(+fuzzString+, +fuzzIntreference+, +fuzzStringreference+, +fuzzFloat+, +fuzzInt+, +fuzzResource+)
+	stream_socket_enable_crypto(+fuzzResource+, +fuzzBool+, +fuzzInt+, +fuzzResource+)
+	stream_socket_get_name(+fuzzResource+, +fuzzBool+)
+	stream_socket_pair(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	stream_socket_sendto(+fuzzResource+, +fuzzString+, +fuzzInt+, +fuzzString+)
+	stream_socket_server(+fuzzString+, +fuzzIntreference+, +fuzzStringreference+, +fuzzInt+, +fuzzResource+)
+	stream_socket_shutdown(+fuzzResource+, +fuzzInt+)
+	stream_supports_lock(+fuzzResource+)
+	stream_wrapper_register(+fuzzString+, +fuzzString+, +fuzzInt+)
+	stream_wrapper_restore(+fuzzString+)
+	stream_wrapper_unregister(+fuzzString+)
+	strftime(+fuzzString+, +fuzzInt+)
+	str_getcsv(+fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+)
+	stripcslashes(+fuzzString+)
+	stripos(+fuzzString+, +fuzzMixed+, +fuzzInt+)
+	stripslashes(+fuzzString+)
+	strip_tags(+fuzzString+, +fuzzString+)
+	str_ireplace(+fuzzMixed+, +fuzzMixed+, +fuzzMixed+, +fuzzIntreference+)
+	stristr(+fuzzString+, +fuzzMixed+, +fuzzBool+)
+	strlen(+fuzzString+)
+	strnatcasecmp(+fuzzString+, +fuzzString+)
+	strnatcmp(+fuzzString+, +fuzzString+)
+	strncasecmp(+fuzzString+, +fuzzString+, +fuzzInt+)
+	strncmp(+fuzzString+, +fuzzString+, +fuzzInt+)
+	str_pad(+fuzzString+, +fuzzInt+, +fuzzString+, +fuzzInt+)
+	strpbrk(+fuzzString+, +fuzzString+)
+	strpos(+fuzzString+, +fuzzMixed+, +fuzzInt+)
+	strptime(+fuzzString+, +fuzzString+)
+	strrchr(+fuzzString+, +fuzzMixed+)
+	str_repeat(+fuzzString+, +fuzzInt+)
+	str_replace(+fuzzMixed+, +fuzzMixed+, +fuzzMixed+, +fuzzIntreference+)
+	strrev(+fuzzString+)
+	strripos(+fuzzString+, +fuzzMixed+, +fuzzInt+)
+	str_rot13(+fuzzString+)
+	strrpos(+fuzzString+, +fuzzMixed+, +fuzzInt+)
+	str_shuffle(+fuzzString+)
+	str_split(+fuzzString+, +fuzzInt+)
+	strspn(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+)
+	strstr(+fuzzString+, +fuzzMixed+, +fuzzBool+)
+	strtok(+fuzzString+)
+	strtok(+fuzzString+, +fuzzString+)
+	strtolower(+fuzzString+)
+	strtotime(+fuzzString+, +fuzzInt+)
+	strtoupper(+fuzzString+)
+	strtr(+fuzzString+, +fuzzArray+)
+	strtr(+fuzzString+, +fuzzString+, +fuzzString+)
+	strval(+fuzzMixed+)
+	str_word_count(+fuzzString+, +fuzzInt+, +fuzzString+)
+	substr_compare(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+, +fuzzBool+)
+	substr_count(+fuzzString+, +fuzzString+, +fuzzInt+, +fuzzInt+)
+	substr(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	substr_replace(+fuzzMixed+, +fuzzMixed+, +fuzzMixed+, +fuzzMixed+)
+	symlink(+fuzzString+, +fuzzString+)
+	sys_getloadavg()
+	sys_get_temp_dir()
+	system(+fuzzString+, +fuzzIntreference+)
+	tan(+fuzzFloat+)
+	tanh(+fuzzFloat+)
+	tempnam(+fuzzString+, +fuzzString+)
+	time()
+	timezone_name_from_abbr(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	timezone_version_get()
+	tmpfile()
+	token_get_all(+fuzzString+, +fuzzInt+)
+	token_name(+fuzzInt+)
+	touch(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	trait_exists(+fuzzString+, +fuzzBool+)
+	trigger_error(+fuzzString+, +fuzzInt+)
+	trim(+fuzzString+, +fuzzString+)
+	uasort(+fuzzArrayreference+, +fuzzCallable+)
+	ucfirst(+fuzzString+)
+	ucwords(+fuzzString+)
+	uksort(+fuzzArrayreference+, +fuzzCallable+)
+	umask(+fuzzInt+)
+	uniqid(+fuzzString+, +fuzzBool+)
+	unlink(+fuzzString+, +fuzzResource+)
+	unpack(+fuzzString+, +fuzzString+, +fuzzInt+)
+	unregister_tick_function(+fuzzCallable+)
+	unserialize(+fuzzString+, +fuzzArray+)
+	urldecode(+fuzzString+)
+	urlencode(+fuzzString+)
+	usort(+fuzzArrayreference+, +fuzzCallable+)
+	utf8_decode(+fuzzString+)
+	utf8_encode(+fuzzString+)
+	var_dump(+fuzzMixed+, +fuzzMixed+)
+	var_export(+fuzzMixed+, +fuzzBool+)
+	version_compare(+fuzzString+, +fuzzString+)
+	version_compare(+fuzzString+, +fuzzString+, +fuzzString+)
+	vfprintf(+fuzzResource+, +fuzzString+, +fuzzArray+)
+	vprintf(+fuzzString+, +fuzzArray+)
+	vsprintf(+fuzzString+, +fuzzArray+)
+	wordwrap(+fuzzString+, +fuzzInt+, +fuzzString+, +fuzzBool+)
+	xml_error_string(+fuzzInt+)
+	xml_get_current_byte_index(+fuzzResource+)
+	xml_get_current_column_number(+fuzzResource+)
+	xml_get_current_line_number(+fuzzResource+)
+	xml_get_error_code(+fuzzResource+)
+	xml_parse(+fuzzResource+, +fuzzString+, +fuzzBool+)
+	xml_parse_into_struct(+fuzzResource+, +fuzzString+, +fuzzArrayreference+, +fuzzArrayreference+)
+	xml_parser_create(+fuzzString+)
+	xml_parser_create_ns(+fuzzString+, +fuzzString+)
+	xml_parser_free(+fuzzResource+)
+	xml_parser_get_option(+fuzzResource+, +fuzzInt+)
+	xml_parser_set_option(+fuzzResource+, +fuzzInt+, +fuzzMixed+)
+	xml_set_character_data_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_default_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_element_handler(+fuzzResource+, +fuzzCallable+, +fuzzCallable+)
+	xml_set_end_namespace_decl_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_external_entity_ref_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_notation_decl_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_object(+fuzzResource+, +fuzzObjectreference+)
+	xml_set_processing_instruction_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_start_namespace_decl_handler(+fuzzResource+, +fuzzCallable+)
+	xml_set_unparsed_entity_decl_handler(+fuzzResource+, +fuzzCallable+)
+	xmlwriter_end_attribute(+fuzzResource+)
+	xmlwriter_end_cdata(+fuzzResource+)
+	xmlwriter_end_comment(+fuzzResource+)
+	xmlwriter_end_document(+fuzzResource+)
+	xmlwriter_end_dtd_attlist(+fuzzResource+)
+	xmlwriter_end_dtd_element(+fuzzResource+)
+	xmlwriter_end_dtd_entity(+fuzzResource+)
+	xmlwriter_end_dtd(+fuzzResource+)
+	xmlwriter_end_element(+fuzzResource+)
+	xmlwriter_end_pi(+fuzzResource+)
+	xmlwriter_flush(+fuzzResource+, +fuzzBool+)
+	xmlwriter_full_end_element(+fuzzResource+)
+	xmlwriter_open_memory()
+	xmlwriter_open_uri(+fuzzString+)
+	xmlwriter_output_memory(+fuzzResource+, +fuzzBool+)
+	xmlwriter_set_indent(+fuzzResource+, +fuzzBool+)
+	xmlwriter_set_indent_string(+fuzzResource+, +fuzzString+)
+	xmlwriter_start_attribute(+fuzzResource+, +fuzzString+)
+	xmlwriter_start_attribute_ns(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_start_cdata(+fuzzResource+)
+	xmlwriter_start_comment(+fuzzResource+)
+	xmlwriter_start_document(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_start_dtd_attlist(+fuzzResource+, +fuzzString+)
+	xmlwriter_start_dtd_element(+fuzzResource+, +fuzzString+)
+	xmlwriter_start_dtd_entity(+fuzzResource+, +fuzzString+, +fuzzBool+)
+	xmlwriter_start_dtd(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_start_element(+fuzzResource+, +fuzzString+)
+	xmlwriter_start_element_ns(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_start_pi(+fuzzResource+, +fuzzString+)
+	xmlwriter_text(+fuzzResource+, +fuzzString+)
+	xmlwriter_write_attribute(+fuzzResource+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_attribute_ns(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_cdata(+fuzzResource+, +fuzzString+)
+	xmlwriter_write_comment(+fuzzResource+, +fuzzString+)
+	xmlwriter_write_dtd_attlist(+fuzzResource+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_dtd_element(+fuzzResource+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_dtd_entity(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzBool+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_dtd(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_element(+fuzzResource+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_element_ns(+fuzzResource+, +fuzzString+, +fuzzString+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_pi(+fuzzResource+, +fuzzString+, +fuzzString+)
+	xmlwriter_write_raw(+fuzzResource+, +fuzzString+)
+	zend_version()
+	zip_close(+fuzzResource+)
+	zip_entry_close(+fuzzResource+)
+	zip_entry_compressedsize(+fuzzResource+)
+	zip_entry_compressionmethod(+fuzzResource+)
+	zip_entry_filesize(+fuzzResource+)
+	zip_entry_name(+fuzzResource+)
+	zip_entry_open(+fuzzResource+, +fuzzResource+, +fuzzString+)
+	zip_entry_read(+fuzzResource+, +fuzzInt+)
+	zip_open(+fuzzString+)
+	zip_read(+fuzzResource+)
+	zlib_decode(+fuzzString+, +fuzzString+)
+	zlib_encode(+fuzzString+, +fuzzInt+, +fuzzInt+)
+	zlib_get_coding_type()
+
+%%% DEFINICJE OBIEKTOW: <-- trzeba uzupelnic
+
+method_DateInterval :=
+	->createFromDateString(+fuzzString+)
+	->format(+fuzzString+)
+
+method_DatePeriod :=
+	->getDateInterval()
+	->getEndDate()
+	->getRecurrences()
+	->getStartDate()
+
+method_DateTime :=
+	->add(+fuzzDateInterval+)
+	->createFromFormat(+fuzzString+, +fuzzString+, +fuzzDateTimeZone+)
+	->createFromImmutable(+fuzzDateTimeImmutable+)
+	->diff(+fuzzDateTimeInterface+, +fuzzBool+)
+	->format(+fuzzString+)
+	->getLastErrors()
+	->getOffset()
+	->getTimestamp()
+	->getTimezone()
+	->modify(+fuzzString+)
+	->setDate(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	->setISODate(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	->__set_state(+fuzzArray+)
+	->setTime(+fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+)
+	->setTimestamp(+fuzzInt+)
+	->setTimezone(+fuzzDateTimeZone+)
+	->sub(+fuzzDateInterval+)
+	->__wakeup()
+
+method_DateTimeImmutable := 
+	->add(+fuzzDateInterval+)
+	->createFromFormat(+fuzzString+, +fuzzString+, +fuzzDateTimeZone+)
+	->createFromMutable(+fuzzDateTime+)
+	->diff(+fuzzDateTimeInterface+, +fuzzBool+)
+	->format(+fuzzString+)
+	->getLastErrors()
+	->getOffset()
+	->getTimestamp()
+	->getTimezone()
+	->modify(+fuzzString+)
+	->setDate(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	->setISODate(+fuzzInt+, +fuzzInt+, +fuzzInt+)
+	->__set_state(+fuzzArray+)
+	->setTime(+fuzzInt+, +fuzzInt+, +fuzzInt+, +fuzzInt+)
+	->setTimestamp(+fuzzInt+)
+	->setTimezone(+fuzzDateTimeZone+)
+	->sub(+fuzzDateInterval+)
+	->__wakeup()
+
+method_DateTimeZone := 
+	->getLocation()
+	->getName()
+	->getOffset(+fuzzDateTimeInterface+)
+	->getTransitions(+fuzzInt+, +fuzzInt+)
+	->listAbbreviations()
+	->listIdentifiers(+fuzzInt+, +fuzzString+)
+
+method_Directory :=
+	->close(+fuzzResource+)
+	->read(+fuzzResource+)
+	->rewind(+fuzzResource+)
+
+method_DOMAttr := 
+	->__construct(+fuzzString+, +fuzzString+)
+	->isId()
+
+method_DOMCharacterData :=
+	->appendData(+fuzzString+)
+	->deleteData(+fuzzInt+, +fuzzInt+)
+	->insertData(+fuzzInt+, +fuzzString+)
+	->replaceData(+fuzzInt+, +fuzzInt+, +fuzzString+)
+	->substringData(+fuzzInt+, +fuzzInt+)
+
+method_DOMComment :=
+	->__construct(+fuzzString+)
+
+
+method_DOMDocument :=
+	->__construct(+fuzzString+, +fuzzString+)
+	->createAttribute(+fuzzString+)
+	->createAttributeNS(+fuzzString+, +fuzzString+)
+	->createCDATASection(+fuzzString+)
+	->createComment(+fuzzString+)
+	->createDocumentFragment()
+	->createElement(+fuzzString+, +fuzzString+)
+	->createElementNS(+fuzzString+, +fuzzString+, +fuzzString+)
+	->createEntityReference(+fuzzString+)
+	->createProcessingInstruction(+fuzzString+, +fuzzString+)
+	->createTextNode(+fuzzString+)
+	->getElementById(+fuzzString+)
+	->getElementsByTagName(+fuzzString+)
+	->getElementsByTagNameNS(+fuzzString+, +fuzzString+)
+	->importNode(+fuzzDOMNode+, +fuzzBool+)
+	->load(+fuzzString+, +fuzzInt+)
+	->loadHTMLFile(+fuzzString+, +fuzzInt+)
+	->loadHTML(+fuzzString+, +fuzzInt+)
+	->loadXML(+fuzzString+, +fuzzInt+)	
+	->normalizeDocument()
+	->registerNodeClass(+fuzzString+, +fuzzString+)
+	->relaxNGValidate(+fuzzString+)
+	->relaxNGValidateSource(+fuzzString+)
+	->save(+fuzzString+, +fuzzInt+)
+	->saveHTMLFile(+fuzzString+)
+	->saveHTML(+fuzzDOMNode+)
+	->saveXML(+fuzzDOMNode+, +fuzzInt+)
+	->schemaValidate(+fuzzString+, +fuzzInt+)
+	->schemaValidateSource(+fuzzString+, +fuzzInt+)
+	->validate()
+	->xinclude(+fuzzInt+)
+
+method_DOMDocumentFragment :=
+	->appendXML(+fuzzString+)
+
+method_DOMElement :=
+	->__construct(+fuzzString+, +fuzzString+, +fuzzString+)
+	->getAttribute(+fuzzString+)
+	->getAttributeNode(+fuzzString+)
+	->getAttributeNodeNS(+fuzzString+, +fuzzString+)
+	->getAttributeNS(+fuzzString+, +fuzzString+)
+	->getElementsByTagName(+fuzzString+)
+	->getElementsByTagNameNS(+fuzzString+, +fuzzString+)
+	->hasAttribute(+fuzzString+)
+	->hasAttributeNS(+fuzzString+, +fuzzString+)
+	->removeAttribute(+fuzzString+)
+	->removeAttributeNode(+fuzzDOMAttr+)
+	->removeAttributeNS(+fuzzString+, +fuzzString+)
+	->setAttribute(+fuzzString+, +fuzzString+)
+	->setAttributeNode(+fuzzDOMAttr+)
+	->setAttributeNodeNS(+fuzzDOMAttr+)
+	->setAttributeNS(+fuzzString+, +fuzzString+, +fuzzString+)
+	->setIdAttribute(+fuzzString+, +fuzzBool+)
+	->setIdAttributeNode(+fuzzDOMAttr+, +fuzzBool+)
+	->setIdAttributeNS(+fuzzString+, +fuzzString+, +fuzzBool+)
+
+method_DOMEntityReference :=
+	->__construct(+fuzzString+)
+
+method_DOMImplementation :=
+	->createDocument(+fuzzString+, +fuzzString+, +fuzzDOMDocumentType+)
+	->createDocumentType(+fuzzString+, +fuzzString+, +fuzzString+)
+	->hasFeature(+fuzzString+, +fuzzString+)
+
+method_DOMNamedNodeMap :=
+	->count()
+	->getNamedItem(+fuzzString+)
+	->getNamedItemNS(+fuzzString+, +fuzzString+)
+	->item(+fuzzInt+)
+
+method_DOMNode :=
+	->appendChild(+fuzzDOMNode+)
+	->C14NFile(+fuzzString+, +fuzzBool+, +fuzzBool+, +fuzzArray+, +fuzzArray+)
+	->C14N(+fuzzBool+, +fuzzBool+, +fuzzArray+, +fuzzArray+)
+	->cloneNode(+fuzzBool+)
+	->getLineNo()
+	->getNodePath()
+	->hasAttributes()
+	->hasChildNodes()
+	->insertBefore(+fuzzDOMNode+, +fuzzDOMNode+)
+	->isDefaultNamespace(+fuzzString+)
+	->isSameNode(+fuzzDOMNode+)
+	->isSupported(+fuzzString+, +fuzzString+)
+	ist>->count()
+	ist>->item(+fuzzInt+)
+	->lookupNamespaceUri(+fuzzString+)
+	->lookupPrefix(+fuzzString+)
+	->normalize()
+	->removeChild(+fuzzDOMNode+)
+	->replaceChild(+fuzzDOMNode+, +fuzzDOMNode+)
+
+method_DOMNodeList :=
+	->count()
+	->item(+fuzzInt+)
+
+
+method_DOMProcessingInstruction :=
+	->__construct(+fuzzString+, +fuzzString+)
+
+method_DOMText :=
+	->isElementContentWhitespace()
+	->isWhitespaceInElementContent()
+	->splitText(+fuzzInt+)
+
+method_DOMXPath :=
+	->__construct(+fuzzDOMDocument+)
+	->evaluate(+fuzzString+, +fuzzDOMNode+, +fuzzBool+)
+	->query(+fuzzString+, +fuzzDOMNode+, +fuzzBool+)
+	->registerNamespace(+fuzzString+, +fuzzString+)
+	->registerPhpFunctions(+fuzzMixed+)
+
+method_ErrorException :=
+	->getSeverity()
+
+method_Error :=
+	->getCode()
+	->getFile()
+	->getLine()
+	->getMessage()
+	->getPrevious()
+	->getTrace()
+	->getTraceAsString()
+	->__toString()
+
+method_Exception :=
+	->getCode()
+	->getFile()
+	->getLine()
+	->getMessage()
+	->getPrevious()
+	->getTrace()
+	->getTraceAsString()
+	->__toString()
+
+method_finfo :=
+	->buffer(+fuzzString+, +fuzzInt+, +fuzzResource+)
+	->file(+fuzzString+, +fuzzInt+, +fuzzResource+)
+	->set_flags(+fuzzInt+)
+
+method_MultipleIterator :=
+	->attachIterator(+fuzzIterator+, +fuzzString+)
+	->containsIterator(+fuzzIterator+)
+	->countIterators()
+	->current()
+	->detachIterator(+fuzzIterator+)
+	->getFlags()
+	->key()
+	->next()
+	->rewind()
+	->setFlags(+fuzzInt+)
+	->valid()
+
+method_php_user_filter := 
+	->filter(+fuzzResource+, +fuzzResource+, +fuzzIntreference+, +fuzzBool+)
+	->onClose()
+	->onCreate()
+
+method_ReflectionClassConstant :=
+	->__construct(+fuzzMixed+, +fuzzString+)
+	->export(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	->getDeclaringClass()
+	->getDocComment()
+	->getModifiers()
+	->getName()
+	->getValue()
+	->isPrivate()
+	->isProtected()
+	->isPublic()
+	->__toString()
+
+method_ReflectionClass :=
+	->__construct(+fuzzMixed+)
+	->export(+fuzzMixed+, +fuzzBool+)
+	->getConstant(+fuzzString+)
+	->getConstants()
+	->getConstructor()
+	->getDefaultProperties()
+	->getDocComment()
+	->getEndLine()
+	->getExtension()
+	->getExtensionName()
+	->getFileName()
+	->getInterfaceNames()
+	->getInterfaces()
+	->getMethod(+fuzzString+)
+	->getMethods(+fuzzInt+)
+	->getModifiers()
+	->getName()
+	->getNamespaceName()
+	->getParentClass()
+	->getProperties(+fuzzInt+)
+	->getProperty(+fuzzString+)
+	->getReflectionConstant(+fuzzString+)
+	->getReflectionConstants()
+	->getShortName()
+	->getStartLine()
+	->getStaticProperties()
+	->getStaticPropertyValue(+fuzzString+, +fuzzMixedreference+)
+	->getTraitAliases()
+	->getTraitNames()
+	->getTraits()
+	->hasConstant(+fuzzString+)
+	->hasMethod(+fuzzString+)
+	->hasProperty(+fuzzString+)
+	->implementsInterface(+fuzzString+)
+	->inNamespace()
+	->isAbstract()
+	->isAnonymous()
+	->isCloneable()
+	->isFinal()
+	->isInstance(+fuzzObject+)
+	->isInstantiable()
+	->isInterface()
+	->isInternal()
+	->isIterable()
+	->isSubclassOf(+fuzzMixed+)
+	->isTrait()
+	->isUserDefined()
+	->newInstanceArgs(+fuzzArray+)
+	->newInstance(+fuzzMixed+)
+	->newInstanceWithoutConstructor()
+	->setStaticPropertyValue(+fuzzString+, +fuzzMixed+)
+	->__toString()
+
+method_Reflection :=
+	->export(+fuzzReflector+, +fuzzBool+)
+	->getModifierNames(+fuzzInt+)
+
+method_ReflectionExtension :=
+	->__construct(+fuzzString+)
+	->export(+fuzzString+, +fuzzString+)
+	->getClasses()
+	->getClassNames()
+	->getConstants()
+	->getDependencies()
+	->getFunctions()
+	->getINIEntries()
+	->getName()
+	->getVersion()
+	->info()
+	->isPersistent()
+	->isTemporary()
+	->__toString()
+
+method_ReflectionFunction :=
+	->__construct(+fuzzMixed+)
+	->export(+fuzzString+, +fuzzString+)
+	->getClosure()
+	->invokeArgs(+fuzzArray+)
+	->invoke(+fuzzMixed+)
+	->isDisabled()
+	->__toString()
+
+method_ReflectionGenerator :=
+	->__construct(+fuzzGenerator+)
+	->getExecutingFile()
+	->getExecutingGenerator()
+	->getExecutingLine()
+	->getFunction()
+	->getThis()
+	->getTrace(+fuzzInt+)
+
+method_ReflectionMethod :=
+	->__construct(+fuzzMixed+, +fuzzString+)
+	->__construct(+fuzzString+)
+	->export(+fuzzString+, +fuzzString+, +fuzzBool+)
+	->getClosure()
+	->getClosure(+fuzzObject+)
+	->getDeclaringClass()
+	->getModifiers()
+	->getPrototype()
+	->invokeArgs(+fuzzObject+, +fuzzArray+)
+	->invoke(+fuzzObject+, +fuzzMixed+)
+	->isAbstract()
+	->isConstructor()
+	->isDestructor()
+	->isFinal()
+	->isPrivate()
+	->isProtected()
+	->isPublic()
+	->isStatic()
+	->setAccessible(+fuzzBool+)
+	->__toString()
+
+method_ReflectionNamedType :=
+	->getName()
+
+method_ReflectionObject :=
+	->__construct(+fuzzObject+)
+	->export(+fuzzString+, +fuzzBool+)
+
+method_ReflectionParameter :=
+	->allowsNull()
+	->canBePassedByValue()
+	->__construct(+fuzzString+, +fuzzString+)
+	->export(+fuzzString+, +fuzzString+, +fuzzBool+)
+	->getClass()
+	->getDeclaringClass()
+	->getDeclaringFunction()
+	->getDefaultValue()
+	->getDefaultValueConstantName()
+	->getName()
+	->getPosition()
+	->getType()
+	->hasType()
+	->isArray()
+	->isCallable()
+	->isDefaultValueAvailable()
+	->isDefaultValueConstant()
+	->isOptional()
+	->isPassedByReference()
+	->isVariadic()
+	->__toString()
+
+method_ReflectionProperty :=
+	->__construct(+fuzzMixed+, +fuzzString+)
+	->export(+fuzzMixed+, +fuzzString+, +fuzzBool+)
+	->getDeclaringClass()
+	->getDocComment()
+	->getModifiers()
+	->getName()
+	->getValue(+fuzzObject+)
+	->isDefault()
+	->isPrivate()
+	->isProtected()
+	->isPublic()
+	->isStatic()
+	->setAccessible(+fuzzBool+)
+	->setValue(+fuzzMixed+)
+	->setValue(+fuzzObject+, +fuzzMixed+)
+	->__toString()
+
+method_ReflectionType :=
+	->allowsNull()
+	->isBuiltin()
+	->__toString()
+
+method_SessionHandler :=
+	->close()
+	->create_sid()
+	->destroy(+fuzzString+)
+	->gc(+fuzzInt+)
+	->open(+fuzzString+, +fuzzString+)
+	->read(+fuzzString+)
+	->write(+fuzzString+, +fuzzString+)
+
+method_SimpleXMLElement :=
+	->addAttribute(+fuzzString+, +fuzzString+, +fuzzString+)
+	->addChild(+fuzzString+, +fuzzString+, +fuzzString+)
+	->asXML(+fuzzString+)
+	->attributes(+fuzzString+, +fuzzBool+)
+	->children(+fuzzString+, +fuzzBool+)
+	->count()
+	->getDocNamespaces(+fuzzBool+, +fuzzBool+)
+	->getName()
+	->getNamespaces(+fuzzBool+)
+	->registerXPathNamespace(+fuzzString+, +fuzzString+)
+	->__toString()
+	->xpath(+fuzzString+)
+
+method_SimpleXMLIterator :=
+	->current()
+	->getChildren()
+	->hasChildren()
+	->key()
+	->next()
+	->rewind()
+	->valid()
+
+method_SplDoublyLinkedList :=
+	->add(+fuzzMixed+, +fuzzMixed+)
+	->bottom()
+	->count()
+	->current()
+	->getIteratorMode()
+	->isEmpty()
+	->key()
+	->next()
+	->offsetExists(+fuzzMixed+)
+	->offsetGet(+fuzzMixed+)
+	->offsetSet(+fuzzMixed+, +fuzzMixed+)
+	->offsetUnset(+fuzzMixed+)
+	->pop()
+	->prev()
+	->push(+fuzzMixed+)
+	->rewind()
+	->serialize()
+	->setIteratorMode(+fuzzInt+)
+	->shift()
+	->top()
+	->unserialize(+fuzzString+)
+	->unshift(+fuzzMixed+)
+	->valid()
+
+method_SplFileObject :=
+	->current()
+	->eof()
+	->fflush()
+	->fgetc()
+	->fgetcsv(+fuzzString+, +fuzzString+, +fuzzString+)
+	->fgets()
+	->fgetss(+fuzzString+)
+	->flock(+fuzzInt+, +fuzzIntreference+)
+	->fpassthru()
+	->fputcsv(+fuzzArray+, +fuzzString+, +fuzzString+, +fuzzString+)
+	->fread(+fuzzInt+)
+	->fscanf(+fuzzString+, +fuzzMixedreference+)
+	->fseek(+fuzzInt+, +fuzzInt+)
+	->fstat()
+	->ftell()
+	->ftruncate(+fuzzInt+)
+	->fwrite(+fuzzString+, +fuzzInt+)
+	->getChildren()
+	->getCsvControl()
+	->getFlags()
+	->getMaxLineLen()
+	->hasChildren()
+	->key()
+	->next()
+	->rewind()
+	->seek(+fuzzInt+)
+	->setCsvControl(+fuzzString+, +fuzzString+, +fuzzString+)
+	->setFlags(+fuzzInt+)
+	->setMaxLineLen(+fuzzInt+)
+	->valid()
+
+method_SplFixedArray :=
+	->count()
+	->current()
+	->fromArray(+fuzzArray+, +fuzzBool+)
+	->getSize()
+	->key()
+	->next()
+	->offsetExists(+fuzzInt+)
+	->offsetGet(+fuzzInt+)
+	->offsetSet(+fuzzInt+, +fuzzMixed+)
+	->offsetUnset(+fuzzInt+)
+	->rewind()
+	->setSize(+fuzzInt+)
+	->toArray()
+	->valid()
+	->__wakeup()
+
+method_SplObjectStorage :=
+	->addAll(+fuzzSplObjectStorage+)
+	->attach(+fuzzObject+, +fuzzMixed+)
+	->contains(+fuzzObject+)
+	->count()
+	->current()
+	->detach(+fuzzObject+)
+	->getHash(+fuzzObject+)
+	->getInfo()
+	->key()
+	->next()
+	->offsetExists(+fuzzObject+)
+	->offsetGet(+fuzzObject+)
+	->offsetSet(+fuzzObject+, +fuzzMixed+)
+	->offsetUnset(+fuzzObject+)
+	->removeAllExcept(+fuzzSplObjectStorage+)
+	->removeAll(+fuzzSplObjectStorage+)
+	->rewind()
+	->serialize()
+	->setInfo(+fuzzMixed+)
+	->unserialize(+fuzzString+)
+	->valid()
+
+method_SplPriorityQueue :=
+	->compare(+fuzzMixed+, +fuzzMixed+)
+	->count()
+	->current()
+	->extract()
+	->getExtractFlags()
+	->insert(+fuzzMixed+, +fuzzMixed+)
+	->isCorrupted()
+	->isEmpty()
+	->key()
+	->next()
+	->recoverFromCorruption()
+	->rewind()
+	->setExtractFlags(+fuzzInt+)
+	->top()
+	->valid()
+
+method_SplQueue :=
+	->dequeue()
+	->enqueue(+fuzzMixed+)
+	->setIteratorMode(+fuzzInt+)
+	
+method_SplStack :=
+	->setIteratorMode(+fuzzInt+)
+
+
+obj_DatePeriod := 
+	$vars["DatePeriod"]+method_DateInterval+
+
+obj_DateInterval :=
+	$vars["DateInterval"]+method_DateInterval+
+
+obj_DateTime :=
+	$vars["DateTime"]+method_DateTime+
+
+
+obj_DateTimeImmutable :=
+	 $vars["DateTimeImmutable"]+method_DateTimeImmutable+
+
+obj_DateTimeZone :=
+	 $vars["DateTimeZone"]+method_DateTimeZone+
+
+obj_Directory :=
+	 $vars["Directory"]+method_Directory+
+
+obj_DOMAttr :=
+	 $vars["DOMAttr"]+method_DOMAttr+
+
+obj_DOMCharacterData :=
+	 $vars["DOMCharacterData"]+method_DOMCharacterData+
+
+obj_DOMComment :=
+	 $vars["DOMComment"]+method_DOMComment+
+
+obj_DOMDocument :=
+	 $vars["DOMDocument"]+method_DOMDocument+
+
+obj_DOMDocumentFragment :=
+	 $vars["DOMDocumentFragment"]+method_DOMDocumentFragment+
+
+obj_DOMElement :=
+	 $vars["DOMElement"]+method_DOMElement+
+
+obj_DOMEntityReference :=
+	 $vars["DOMEntityReference"]+method_DOMEntityReference+
+
+obj_DOMImplementation :=
+	 $vars["DOMImplementation"]+method_DOMImplementation+
+
+obj_DOMNamedNodeMap :=
+	 $vars["DOMNamedNodeMap"]+method_DOMNamedNodeMap+
+
+obj_DOMNode :=
+	$vars["DOMNode"]+method_DOMNode+
+
+obj_DOMNodeList :=
+	$vars["DOMNodeList"]+method_DOMNodeList+
+
+obj_DOMProcessingInstruction :=
+	 $vars["DOMProcessingInstruction"]+method_DOMProcessingInstruction+
+
+obj_DOMText :=
+	 $vars["DOMText"]+method_DOMText+
+
+obj_DOMXPath :=
+	 $vars["DOMXPath"]+method_DOMXPath+
+
+obj_Error :=
+	 $vars["Error"]+method_Error+
+
+obj_ErrorException :=
+	 $vars["ErrorException"]+method_ErrorException+
+
+obj_Exception :=
+	 $vars["Exception"]+method_Exception+
+
+obj_finfo :=
+	 $vars["finfo"]+method_finfo+
+
+obj_MultipleIterator :=
+	 $vars["MultipleIterator"]+method_MultipleIterator+
+
+obj_php_user_filter :=
+	 $vars["php_user_filter"]+method_php_user_filter+
+
+obj_Reflection :=
+	 $vars["Reflection"]+method_Reflection+
+
+obj_ReflectionClass :=
+	 $vars["ReflectionClass"]+method_ReflectionClass+
+
+obj_ReflectionClassConstant :=
+	 $vars["ReflectionClassConstant"]+method_ReflectionClassConstant+
+
+obj_ReflectionExtension :=
+	 $vars["ReflectionExtension"]+method_ReflectionExtension+
+
+obj_ReflectionFunction :=
+	 $vars["ReflectionFunction"]+method_ReflectionFunction+
+
+obj_ReflectionGenerator :=
+	 $vars["ReflectionGenerator"]+method_ReflectionGenerator+
+
+obj_ReflectionMethod :=
+	 $vars["ReflectionMethod"]+method_ReflectionMethod+
+
+obj_ReflectionNamedType :=
+	 $vars["ReflectionNamedType"]+method_ReflectionNamedType+
+
+obj_ReflectionObject :=
+	 $vars["ReflectionObject"]+method_ReflectionObject+
+
+obj_ReflectionParameter :=
+	 $vars["ReflectionParameter"]+method_ReflectionParameter+
+
+obj_ReflectionProperty :=
+	 $vars["ReflectionProperty"]+method_ReflectionProperty+
+
+obj_ReflectionType :=
+	 $vars["ReflectionType"]+method_ReflectionType+
+
+obj_SessionHandler :=
+	 $vars["SessionHandler"]+method_SessionHandler+
+
+obj_SimpleXMLElement :=
+	 $vars["SimpleXMLElement"]+method_SimpleXMLElement+
+
+obj_SimpleXMLIterator :=
+	 $vars["SimpleXMLIterator"]+method_SimpleXMLIterator+
+
+obj_SplDoublyLinkedList :=
+	 $vars["SplDoublyLinkedList"]+method_SplDoublyLinkedList+
+
+obj_SplFileObject :=
+	 $vars["SplFileObject"]+method_SplFileObject+
+
+obj_SplFixedArray :=
+	 $vars["SplFixedArray"]+method_SplFixedArray+
+
+obj_SplObjectStorage :=
+	 $vars["SplObjectStorage"]+method_SplObjectStorage+
+
+obj_SplPriorityQueue :=
+	 $vars["SplPriorityQueue"]+method_SplPriorityQueue+
+
+obj_SplQueue :=
+	 $vars["SplQueue"]+method_SplQueue+
+
+obj_SplStack :=
+	 $vars["SplStack"]+method_SplStack+
+
+
+wszystkieObiekty :=
+	+obj_DateInterval+
+	+obj_DatePeriod+
+	+obj_DateTime+
+	+obj_DateTimeImmutable+
+	+obj_DateTimeZone+
+	+obj_Directory+
+	+obj_DOMAttr+
+	+obj_DOMCharacterData+
+	+obj_DOMComment+
+	+obj_DOMDocument+
+	+obj_DOMDocumentFragment+
+	+obj_DOMElement+
+	+obj_DOMEntityReference+
+	+obj_DOMImplementation+
+	+obj_DOMNamedNodeMap+
+	+obj_DOMNode+
+	+obj_DOMNodeList+
+	+obj_DOMProcessingInstruction+
+	+obj_DOMText+
+	+obj_DOMXPath+
+	+obj_Error+
+	+obj_ErrorException+
+	+obj_Exception+
+	+obj_finfo+
+	+obj_MultipleIterator+
+	+obj_php_user_filter+
+	+obj_Reflection+
+	+obj_ReflectionClass+
+	+obj_ReflectionClassConstant+
+	+obj_ReflectionExtension+
+	+obj_ReflectionFunction+
+	+obj_ReflectionGenerator+
+	+obj_ReflectionMethod+
+	+obj_ReflectionNamedType+
+	+obj_ReflectionObject+
+	+obj_ReflectionParameter+
+	+obj_ReflectionProperty+
+	+obj_ReflectionType+
+	+obj_SessionHandler+
+	+obj_SimpleXMLElement+
+	+obj_SimpleXMLIterator+
+	+obj_SplDoublyLinkedList+
+	+obj_SplFileObject+
+	+obj_SplFixedArray+
+	+obj_SplObjectStorage+
+	+obj_SplPriorityQueue+
+	+obj_SplQueue+
+	+obj_SplStack+
+
+definition :=
+	+wszystkieFunkcje+;
+	+wszystkieObiekty+;
+
+%%% SEKCJA ZMIENNYCH
+%section% := variable
+
+
+%%% ###################################################
+%section% := variance
+
+main :=
+	+definition+
+
+
